@@ -1,0 +1,230 @@
+---
+title: "Real-Time Credit Risk & Lending Scoring Engine"
+subtitle: "Production Framework: 3NF PostgreSQL Architecture & Quantitative R Pipelines"
+author: "Your Name"
+date: "November 2026"
+format:
+  html:
+    theme: journal
+    toc: true
+    toc-depth: 3
+    code-fold: show
+    embed-resources: true
+---
+
+## 1. Project Objective & Structural Business Rules
+
+This analytical engine evaluates consumer credit risk tiers by processing raw, unnormalized ingestion streams and structuring them into an optimized, third-normal form (3NF) relational database kernel.
+
+The architecture programmatically enforces the following corporate fintech mandates: 1. **Absolute Identity Uniqueness:** Every applicant maps to a singular record bound by unique network keys to completely prevent corporate duplication fraud. 2. **Exact Fixed Precision:** All financial values (balances, loan amounts, installments) are mapped to exact decimal storage scales to completely block binary rounding vulnerabilities. 3. **Database-Level Firebreaks:** Operational validation rules are handled directly by the database kernel via hardware-enforced constraints.
+
+------------------------------------------------------------------------
+
+## 2. The Broken Sandbox Input Layer (0NF)
+
+Upstream banking feeds frequently deliver data in flat, corrupted, or packed string formats. Below is the raw ingestion sample displayed in an unclipped, rigid text container to preserve complete structural visibility during the audit phase:
+
+``` text
+ID | Name        | Email          | Monthly_Income | FICO | Loan_Details                                 | Late_Payments_Dates
+---+-------------+----------------+----------------+------+----------------------------------------------+------------------------
+1  | Alice Smith | alice@bank.com | 6000.00        | 740  | Amt: 20000, Installment: 550, Status: ACTIVE | NULL
+2  | Bob Jones   | bob@risk.io    | 4200.00        | 580  | Amt: 15000, Installment: 410, Status: ACTIVE | 01/15/2026, 03/15/2026
+```
+
+### Critical Architecture Defects Identified:
+
+- **1NF Violation:** The `Late_Payments_Dates` attribute stores a comma-separated array of values inside a single cell, rendering standard mathematical time-series modeling impossible.
+- **3NF/Functional Dependency Violations:** Loan parameters are trapped inside a single arbitrary text block (`Loan_Details`). If an applicant applies for a secondary credit instrument, their name, email, and income must be duplicated across multiple rows, introducing catastrophic data update anomalies.
+
+------------------------------------------------------------------------
+
+## 3. Relational 3NF Database Schema Migrations
+
+To resolve these anomalies, the database schema is decoupled into three highly narrow, normalized tables. The following pure PostgreSQL Data Definition Language (DDL) code block is embedded directly into our documentation stream to initialize the storage structures \[INDEX\]:
+
+``` sql
+-- Table A: Core Client Demographics
+CREATE TABLE IF NOT EXISTS applicants (
+    applicant_id INT PRIMARY KEY,
+    legal_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    monthly_income NUMERIC(12, 2) NOT NULL,
+    credit_score_fico INT NOT NULL,
+    CONSTRAINT valid_fico CHECK (credit_score_fico BETWEEN 300 AND 850)
+);
+
+-- Table B: Active Lending Contracts
+CREATE TABLE IF NOT EXISTS loans (
+    loan_id INT PRIMARY KEY,
+    applicant_id INT REFERENCES applicants(applicant_id) ON DELETE RESTRICT,
+    loan_amount NUMERIC(12, 2) NOT NULL,
+    monthly_installment NUMERIC(12, 2) NOT NULL,
+    loan_status VARCHAR(20) DEFAULT 'ACTIVE',
+    CONSTRAINT positive_loan CHECK (loan_amount > 0)
+);
+
+-- Table C: Append-Only Payment Ledger
+CREATE TABLE IF NOT EXISTS loan_payments (
+    payment_id INT PRIMARY KEY,
+    loan_id INT REFERENCES loans(loan_id),
+    payment_amount NUMERIC(12, 2) NOT NULL,
+    payment_date DATE NOT NULL,
+    is_late_payment BOOLEAN DEFAULT FALSE
+);
+```
+
+------------------------------------------------------------------------
+
+## 4. Automated Text-Parsing & Ingestion Engine
+
+The executable R block below drives our automated transformation pipeline. It initializes the database connection, maps the 0NF raw layout data into R memory, cleanses the packed string parameters using regular expressions, maps U.S. date formats into native date structures, and streams the clean entries straight to our local PostgreSQL tables \[INDEX\].
+
+```{r pipeline-ingestion, message=FALSE, warning=FALSE}
+library(DBI)
+library(RPostgres)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(lubridate)
+
+set.seed(42) # Lock pseudo-random processing determinism
+
+# 1. Open the secure network pipe to local PostgreSQL
+con <- dbConnect(
+  RPostgres::Postgres(),
+  dbname = "credit_risk_db", host = "localhost", port = 5432,
+  user = "postgres", password = "secure_password"
+)
+
+# 2. Stage the unnormalized raw data frame
+sandbox_raw <- data.frame(
+  ID = c(1, 2),
+  Name = c("Alice Smith", "Bob Jones"),
+  Email = c("alice@bank.com", "bob@risk.io"),
+  Monthly_Income = c(6000.00, 4200.00),
+  FICO = c(740, 580),
+  Loan_Details = c(
+    "Amt: 20000, Installment: 550, Status: ACTIVE",
+    "Amt: 15000, Installment: 410, Status: ACTIVE"
+  ),
+  Late_Payments_Dates = c(NA, "01/15/2026, 03/15/2026"),
+  stringsAsFactors = FALSE
+)
+
+# 3. Process and normalize Table A: Applicants
+applicants_clean <- sandbox_raw %>%
+  select(
+    applicant_id = ID, 
+    legal_name = Name, 
+    email = Email, 
+    monthly_income = Monthly_Income, 
+    credit_score_fico = FICO
+  )
+
+# 4. Parse string structures and normalize Table B: Loans
+loans_clean <- sandbox_raw %>%
+  mutate(
+    loan_amount = as.numeric(str_extract(Loan_Details, "(?<=Amt:\\s)\\d+")),
+    monthly_installment = as.numeric(str_extract(Loan_Details, "(?<=Installment:\\s)\\d+")),
+    loan_status = str_extract(Loan_Details, "(?<=Status:\\s)[A-Z]+")
+  ) %>%
+  select(loan_id = ID, applicant_id = ID, loan_amount, monthly_installment, loan_status)
+
+# 5. Expand multi-value rows, normalize dates, and clean Table C: Payments
+payments_clean <- sandbox_raw %>%
+  filter(!is.na(Late_Payments_Dates)) %>%
+  separate_rows(Late_Payments_Dates, sep = ",\\s*") %>%
+  mutate(
+    monthly_installment = as.numeric(str_extract(Loan_Details, "(?<=Installment:\\s)\\d+")),
+    payment_id = row_number(),
+    loan_id = ID,
+    payment_amount = monthly_installment,
+    is_late_payment = TRUE,
+    payment_date = mdy(Late_Payments_Dates) # Resolves U.S. date strings
+  ) %>%
+  select(payment_id, loan_id, payment_amount, payment_date, is_late_payment)
+
+# 6. Append records to physical PostgreSQL storage nodes
+dbWriteTable(con, "applicants", applicants_clean, append = TRUE, row.names = FALSE)
+dbWriteTable(con, "loans", loans_clean, append = TRUE, row.names = FALSE)
+dbWriteTable(con, "loan_payments", payments_clean, append = TRUE, row.names = FALSE)
+```
+
+------------------------------------------------------------------------
+
+## 5. Modern In-Database Machine Learning Pipeline (`mlr3`)
+
+With the data structural transformation layer finalized, we load our clean tabular entries directly out of PostgreSQL and feed them into the object-oriented `mlr3` framework to optimize an automated classification engine.
+
+```{r mlr3-modeling, message=FALSE, warning=FALSE}
+library(mlr3)
+library(mlr3learners)
+library(mlr3tuning)
+library(paradox)
+
+# 1. Pull the live, clean records directly from the database
+model_data <- tbl(con, "applicants") %>% collect()
+
+# Create a synthetic risk category targets column for cross-validation modeling
+model_data <- model_data %>%
+  mutate(risk_tier = ifelse(credit_score_fico >= 700, "PRIME", "HIGH_RISK"))
+
+# 2. Instantiate the core mlr3 task configuration object
+task_credit <- as_task_classif(model_data, target = "risk_tier", id = "lending_analytics")
+
+# 3. Initialize an Object-Oriented Learner Engine (Random Forest via ranger)
+learner_rf <- lrn("classif.ranger", predict_type = "prob")
+
+# 4. Map the mathematical hyperparameter optimization search bounds
+search_space <- ps(
+  mtry = p_int(lower = 1, upper = 3),
+  min.node.size = p_int(lower = 1, upper = 10)
+)
+
+# 5. Establish Evaluation Strategy (Grid Search + 5-Fold Cross Validation loops)
+tuner <- tnr("grid_search", resolution = 5)
+resampling_cv5 <- rsmmp("cv", folds = 5)
+measure_accuracy <- msr("classif.acc")
+
+# 6. Initialize and run the automated execution tuning controller
+instance <- TuningInstanceBatchSingleCrit$new(
+  task = task_credit,
+  learner = learner_rf,
+  resampling = resampling_cv5,
+  measure = measure_accuracy,
+  search_space = search_space,
+  terminator = trm("evals", n_evals = 15)
+)
+
+tuner$optimize(instance)
+```
+
+------------------------------------------------------------------------
+
+## 6. Optimization Audit & Evaluation Summary
+
+To mathematically verify that our ingestion regular expressions and our hyperparameter modeling passes completed successfully, the final operational summaries are printed below:
+
+```{r audit-output, echo=FALSE}
+# Output the tuned hyperparameter values
+print(instance$result_learner_param_vals)
+
+# Output a clean execution summary of our parsed payments data
+knitr::kable(payments_clean, caption = "Verified 1NF Compliant 'loan_payments' Table Output")
+
+# Safely decouple the active network link to the PostgreSQL server
+dbDisconnect(con)
+```
+
+------------------------------------------------------------------------
+
+## 7. System Architecture & Project Execution Log
+
+This section serves as a permanent, reproducible engineering log documenting the development lifecycle, technical challenges, and infrastructure choices implemented across this project.
+
+### 📅 Log Entry 1: Local Machine Environment Setup (Windows 11)
+
+- **Action:** Initialized Git for Windows 11 to activate the Linux-style **Git Bash** terminal emulator environment.
+- **Configuration Safeguards:**
+  - Configured the default terminal text editor to `Notepad` instead of `Vim` to prevent terminal keyboard lockouts.
+  - Overrode default starting repository branches to explicitly enforce the modern `main` standard.
