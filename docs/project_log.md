@@ -40,3 +40,10 @@
 ## 📅 Step 6: Git Exclusions & Cloud Automation
 *   **Action:** Crafted a `.gitignore` template to block hidden Windows 11 system files (`desktop.ini`, `Thumbs.db`), RStudio runtime logs (`.Rhistory`), and heavy textbook PDF binaries from bloated repository uploads.
 *   **Cloud Ingestion Trigger:** Set up `.github/workflows/publish.yml` to automatically rent a temporary Linux server container (`ubuntu-latest`) in the cloud every time code is pushed. The server installs R dependencies, runs the `mlr3` optimization loops, and builds a compiled, interactive HTML presentation website via Quarto.
+
+## 📅 Step 8: Relational Visual Schema Verification Audit
+*   **Action:** Conducted a comprehensive visual schema alignment audit against production fintech lending frameworks.
+*   **Validation Rules Applied:**
+    *   Verified that the relationship between `applicants` and `loans` explicitly uses a 1-to-Many Crow's Foot connector, anchoring database identity integrity.
+    *   Confirmed that the `loan_payments` stream is isolated with a terminal fork to visually validate 1NF conformity against cell data packing anomalies.
+    *   Ensured all relational connector endpoints terminate directly on explicit Foreign Key (`FK`) cell rows rather than floating table margins, matching enterprise data governance standards.
