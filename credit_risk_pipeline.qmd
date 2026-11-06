@@ -214,6 +214,80 @@ knitr::kable(payments_clean, caption = "Verified 1NF Compliant 'loan_payments' T
 
 # Safely decouple the active network link to the PostgreSQL server
 dbDisconnect(con)
+
+### 📊 Portfolio Risk Tranche Aggregations
+
+The execution block below uses `dbplyr` to translate group aggregation logic directly onto the database cluster, calculating total outstanding exposure volumes across risk tranches:
+  
+  ```{r risk-tranche-aggregations}
+# Re-open the database connection pipe
+con <- dbConnect(
+  RPostgres::Postgres(),
+  dbname = "credit_risk_db", host = "localhost", port = 5432,
+  user = "postgres", password = "secure_password"
+)
+
+# 1. Access the virtual pointers
+applicants_tbl <- tbl(con, "applicants")
+loans_tbl <- tbl(con, "loans")
+
+# 2. Build the group aggregation pipeline natively inside the database kernel
+portfolio_summary <- applicants_tbl %>%
+  inner_join(loans_tbl, by = "applicant_id") %>%
+  mutate(
+    risk_tranche = if_else(credit_score_fico >= 700, "PRIME (LOW RISK)", "SUBPRIME (HIGH RISK)")
+  ) %>%
+  group_by(risk_tranche) %>%
+  summarise(
+    total_active_loans = n(),
+    total_capital_exposure = sum(loan_amount, na.rm = TRUE),
+    avg_monthly_installment = mean(monthly_installment, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  collect() # Pull only the summarized macro matrix into local R memory
+
+# 3. Print the verified portfolio metadata layout
+knitr::kable(portfolio_summary, caption = "Fintech Executive Summary: Capital Exposure by Tranche")
+
+# Safely decouple the server connection
+dbDisconnect(con)
+
+### 🔍 Advanced Portfolio Subqueries & CTE Filters
+
+The execution block below utilizes `dbplyr` lazy-evaluation syntax to build a multi-layered Common Table Expression (CTE) directly inside the database engine, isolating high-income subprime borrowers:
+  
+  ```{r advanced-cte-filter}
+# Re-open the database connection pipe
+con <- dbConnect(
+  RPostgres::Postgres(),
+  dbname = "credit_risk_db", host = "localhost", port = 5432,
+  user = "postgres", password = "secure_password"
+)
+
+# 1. Establish virtual pointers
+applicants_tbl <- tbl(con, "applicants")
+
+# 2. Calculate the baseline average income scalar via lazy evaluation
+global_avg_income <- applicants_tbl %>%
+  summarise(avg_inc = mean(monthly_income, na.rm = TRUE)) %>%
+  pull(avg_inc)
+
+# 3. Construct the advanced conditional filtering pipeline
+high_income_subprime <- applicants_tbl %>%
+  mutate(
+    risk_tranche = if_else(credit_score_fico >= 700, "PRIME", "SUBPRIME")
+  ) %>%
+  filter(monthly_income > global_avg_income & risk_tranche == "SUBPRIME") %>%
+  select(applicant_id, legal_name, monthly_income, credit_score_fico, risk_tranche) %>%
+  collect()
+
+# 4. Print the verified exceptions table layout for the risk committee
+knitr::kable(high_income_subprime, caption = "Portfolio Risk Anomalies: High-Income Subprime Exceptions")
+
+# Safely close the network connection link
+dbDisconnect(con)
+
+
 ```
 
 ------------------------------------------------------------------------
