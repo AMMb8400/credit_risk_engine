@@ -94,3 +94,27 @@ CROSS JOIN income_benchmark ib
 WHERE tm.monthly_income > ib.global_avg_income
   AND tm.risk_tranche = 'SUBPRIME'
 ORDER BY tm.monthly_income DESC;
+
+-- ==============================================================================
+-- Database Architecture Object: Permanent Portfolio Risk Summary View
+-- Architect: Alexandre Marcel Mbassi
+-- ==============================================================================
+
+CREATE OR REPLACE VIEW v_portfolio_risk_summary AS
+SELECT 
+    a.applicant_id,
+    a.legal_name,
+    a.email,
+    a.monthly_income,
+    a.credit_score_fico,
+    CASE 
+        WHEN a.credit_score_fico >= 700 THEN 'PRIME'
+        ELSE 'SUBPRIME'
+    END AS risk_tranche,
+    l.loan_id,
+    l.loan_amount,
+    l.monthly_installment,
+    l.loan_status
+FROM applicants a
+INNER JOIN loans l 
+    ON a.applicant_id = l.applicant_id;

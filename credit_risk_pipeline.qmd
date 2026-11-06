@@ -286,6 +286,44 @@ knitr::kable(high_income_subprime, caption = "Portfolio Risk Anomalies: High-Inc
 
 # Safely close the network connection link
 dbDisconnect(con)
+## 8. Database Architecture Abstraction via Views
+
+To simplify access for downstream Business Intelligence tools and quantitative models, we encapsulate our relational schema layers inside a permanent database View object. This abstract layer exposes unified metrics while masking underlying multi-table join geometries:
+  
+  ```{r database-view-provision}
+# Re-open the database connection pipe
+con <- dbConnect(
+  RPostgres::Postgres(),
+  dbname = "credit_risk_db", host = "localhost", port = 5432,
+  user = "postgres", password = "secure_password"
+)
+
+# 1. Execute the DDL script to create the View object inside the Postgres engine
+dbExecute(con, "
+  CREATE OR REPLACE VIEW v_portfolio_risk_summary AS
+  SELECT 
+      a.applicant_id, a.legal_name, a.email, a.monthly_income, a.credit_score_fico,
+      CASE WHEN a.credit_score_fico >= 700 THEN 'PRIME' ELSE 'SUBPRIME' END AS risk_tranche,
+      l.loan_id, l.loan_amount, l.monthly_installment, l.loan_status
+  FROM applicants a
+  INNER JOIN loans l ON a.applicant_id = l.applicant_id;
+")
+
+# 2. Query the newly created View as if it were a standard flat table
+risk_view_tbl <- tbl(con, "v_portfolio_risk_summary")
+
+# 3. Pull a quick verification sample into local memory for audit review
+view_sample <- risk_view_tbl %>% 
+  filter(risk_tranche == "SUBPRIME") %>% 
+  head(10) %>% 
+  collect()
+
+# 4. Print the final verified abstraction summary
+knitr::kable(view_sample, caption = "Database View Verification: 'v_portfolio_risk_summary' Active Nodes")
+
+# Safely close the active network connection link
+dbDisconnect(con)
+
 
 
 ```
