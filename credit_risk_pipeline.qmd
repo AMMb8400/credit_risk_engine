@@ -149,6 +149,19 @@ payments_clean <- sandbox_raw %>%
 dbWriteTable(con, "applicants", applicants_clean, append = TRUE, row.names = FALSE)
 dbWriteTable(con, "loans", loans_clean, append = TRUE, row.names = FALSE)
 dbWriteTable(con, "loan_payments", payments_clean, append = TRUE, row.names = FALSE)
+
+# 7. Seed sample credit card dataframe entries for 3NF verification
+cards_sample <- data.frame(
+  card_id = 501,
+  applicant_id = 1,
+  credit_limit = 10000.00,
+  current_balance = 1250.50,
+  card_status = "ACTIVE",
+  stringsAsFactors = FALSE
+)
+
+dbWriteTable(con, "credit_cards", cards_sample, append = TRUE, row.names = FALSE)
+
 ```
 
 ------------------------------------------------------------------------
