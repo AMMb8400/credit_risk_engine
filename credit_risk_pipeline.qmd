@@ -1,11 +1,11 @@
 ---
 title: "Real-Time Credit Risk & Lending Scoring Engine"
-subtitle: "Production Framework: 3NF PostgreSQL Architecture & Quantitative R Pipelines"
+subtitle: "Production Blueprint: 3NF PostgreSQL Architecture & Object-Oriented AI Pipelines"
 author: "Alexandre Marcel Mbassi"
 date: "November 2026"
 format:
   html:
-    theme: journal
+    theme: cosmo
     toc: true
     toc-depth: 3
     code-fold: show
@@ -16,11 +16,11 @@ format:
 
 This analytical engine evaluates consumer credit risk tiers by processing raw, unnormalized ingestion streams and structuring them into an optimized, third-normal form (3NF) relational database kernel.
 
-The architecture programmatically enforces the following corporate fintech mandates: 1. **Absolute Identity Uniqueness:** Every applicant maps to a singular record bound by unique network keys to completely prevent corporate duplication fraud. 2. **Exact Fixed Precision:** All financial values (balances, loan amounts, installments) are mapped to exact decimal storage scales to completely block binary rounding vulnerabilities. 3. **Database-Level Firebreaks:** Operational validation rules are handled directly by the database kernel via hardware-enforced constraints.
+The architecture programmatically enforces the following corporate fintech mandates: 1. **Absolute Identity Uniqueness:** Every applicant maps to a singular record bound by unique network keys to completely prevent corporate duplication fraud. 2. **Exact Fixed Precision:** All financial values (balances, loan amounts, installments) are mapped to exact decimal storage scales (`NUMERIC`) to completely block binary floating-point rounding vulnerabilities. 3. **Database-Level Firebreaks:** Operational validation rules are handled directly by the database kernel via hardware-enforced check constraints and atomic transactions.
 
 ------------------------------------------------------------------------
 
-## 2. The Broken Sandbox Input Layer (0NF)
+## 2. The Broken Ingestion Layer (0NF Data)
 
 Upstream banking feeds frequently deliver data in flat, corrupted, or packed string formats. Below is the raw ingestion sample displayed in an unclipped, rigid text container to preserve complete structural visibility during the audit phase:
 
@@ -40,7 +40,7 @@ ID | Name        | Email          | Monthly_Income | FICO | Loan_Details        
 
 ## 3. Relational 3NF Database Schema Migrations
 
-To resolve these anomalies, the database schema is decoupled into three highly narrow, normalized tables. The following pure PostgreSQL Data Definition Language (DDL) code block is embedded directly into our documentation stream to initialize the storage structures \[INDEX\]:
+To resolve these anomalies, the database schema is decoupled into three highly narrow, normalized tables. The following pure PostgreSQL Data Definition Language (DDL) code block initializes the storage structures \[1.4\]:
 
 ``` sql
 -- Table A: Core Client Demographics
@@ -53,14 +53,15 @@ CREATE TABLE IF NOT EXISTS applicants (
     CONSTRAINT valid_fico CHECK (credit_score_fico BETWEEN 300 AND 850)
 );
 
--- Table B: Active Lending Contracts
+-- Table B: Active Lending Contracts (Hardened with Exact Precision)
 CREATE TABLE IF NOT EXISTS loans (
     loan_id INT PRIMARY KEY,
     applicant_id INT REFERENCES applicants(applicant_id) ON DELETE RESTRICT,
     loan_amount NUMERIC(12, 2) NOT NULL,
     monthly_installment NUMERIC(12, 2) NOT NULL,
     loan_status VARCHAR(20) DEFAULT 'ACTIVE',
-    CONSTRAINT positive_loan CHECK (loan_amount > 0)
+    CONSTRAINT positive_loan CHECK (loan_amount > 0),
+    CONSTRAINT enforced_lending_ceiling CHECK (loan_amount <= 500000.00)
 );
 
 -- Table C: Append-Only Payment Ledger
@@ -77,7 +78,7 @@ CREATE TABLE IF NOT EXISTS loan_payments (
 
 ## 4. Automated Text-Parsing & Ingestion Engine
 
-The executable R block below drives our automated transformation pipeline. It initializes the database connection, maps the 0NF raw layout data into R memory, cleanses the packed string parameters using regular expressions, maps U.S. date formats into native date structures, and streams the clean entries straight to our local PostgreSQL tables \[INDEX\].
+The executable R block below drives our automated transformation pipeline. It initializes the database connection, maps the 0NF raw layout data into R memory, cleanses the packed string parameters using regular expressions, maps U.S. date formats into native date structures, and streams the clean entries straight to our local PostgreSQL tables \[1.4\].
 
 ```{r pipeline-ingestion, message=FALSE, warning=FALSE}
 library(DBI)
@@ -87,7 +88,7 @@ library(tidyr)
 library(stringr)
 library(lubridate)
 
-set.seed(42) # Lock pseudo-random processing determinism
+set.seed(42) # Lock pseudo-random processing determinism [1.4]
 
 # 1. Open the secure network pipe to local PostgreSQL
 con <- dbConnect(
@@ -154,7 +155,7 @@ dbWriteTable(con, "loan_payments", payments_clean, append = TRUE, row.names = FA
 
 ## 5. Modern In-Database Machine Learning Pipeline (`mlr3`)
 
-With the data structural transformation layer finalized, we load our clean tabular entries directly out of PostgreSQL and feed them into the object-oriented `mlr3` framework to optimize an automated classification engine.
+With the data structural transformation layer finalized, we load our clean tabular entries directly out of PostgreSQL and feed them into the object-oriented `mlr3` framework to optimize an automated classification engine \[1.4\].
 
 ```{r mlr3-modeling, message=FALSE, warning=FALSE}
 library(mlr3)
@@ -165,28 +166,28 @@ library(paradox)
 # 1. Pull the live, clean records directly from the database
 model_data <- tbl(con, "applicants") %>% collect()
 
-# Create a synthetic risk category targets column for cross-validation modeling
+# Create a synthetic risk category targets column for cross-validation modeling [1.4]
 model_data <- model_data %>%
   mutate(risk_tier = ifelse(credit_score_fico >= 700, "PRIME", "HIGH_RISK"))
 
-# 2. Instantiate the core mlr3 task configuration object
+# 2. Instantiate the core mlr3 task configuration object [1.4]
 task_credit <- as_task_classif(model_data, target = "risk_tier", id = "lending_analytics")
 
-# 3. Initialize an Object-Oriented Learner Engine (Random Forest via ranger)
+# 3. Initialize an Object-Oriented Learner Engine (Random Forest via ranger) [1.4]
 learner_rf <- lrn("classif.ranger", predict_type = "prob")
 
-# 4. Map the mathematical hyperparameter optimization search bounds
+# 4. Map the mathematical hyperparameter optimization search bounds [1.4]
 search_space <- ps(
   mtry = p_int(lower = 1, upper = 3),
   min.node.size = p_int(lower = 1, upper = 10)
 )
 
-# 5. Establish Evaluation Strategy (Grid Search + 5-Fold Cross Validation loops)
+# 5. Establish Evaluation Strategy (Grid Search + 5-Fold Cross Validation loops) [1.4]
 tuner <- tnr("grid_search", resolution = 5)
 resampling_cv5 <- rsmmp("cv", folds = 5)
 measure_accuracy <- msr("classif.acc")
 
-# 6. Initialize and run the automated execution tuning controller
+# 6. Initialize and run the automated execution tuning controller [1.4]
 instance <- TuningInstanceBatchSingleCrit$new(
   task = task_credit,
   learner = learner_rf,
@@ -201,33 +202,12 @@ tuner$optimize(instance)
 
 ------------------------------------------------------------------------
 
-## 6. Optimization Audit & Evaluation Summary
+## 6. Real-Time Relational Analytics & Risk Tranche Aggregations
 
-To mathematically verify that our ingestion regular expressions and our hyperparameter modeling passes completed successfully, the final operational summaries are printed below:
+Below, we execute our relational aggregation logic using `dbplyr` to slice raw entries into distinct, summarized macro risk tranches natively inside the database engine kernel \[1.4\]:
 
-```{r audit-output, echo=FALSE}
-# Output the tuned hyperparameter values
-print(instance$result_learner_param_vals)
-
-# Output a clean execution summary of our parsed payments data
-knitr::kable(payments_clean, caption = "Verified 1NF Compliant 'loan_payments' Table Output")
-
-# Safely decouple the active network link to the PostgreSQL server
-dbDisconnect(con)
-
-### 📊 Portfolio Risk Tranche Aggregations
-
-The execution block below uses `dbplyr` to translate group aggregation logic directly onto the database cluster, calculating total outstanding exposure volumes across risk tranches:
-  
-  ```{r risk-tranche-aggregations}
-# Re-open the database connection pipe
-con <- dbConnect(
-  RPostgres::Postgres(),
-  dbname = "credit_risk_db", host = "localhost", port = 5432,
-  user = "postgres", password = "secure_password"
-)
-
-# 1. Access the virtual pointers
+```{r risk-tranche-aggregations, message=FALSE, warning=FALSE}
+# 1. Access the virtual database pointers
 applicants_tbl <- tbl(con, "applicants")
 loans_tbl <- tbl(con, "loans")
 
@@ -244,99 +224,8 @@ portfolio_summary <- applicants_tbl %>%
     avg_monthly_installment = mean(monthly_installment, na.rm = TRUE),
     .groups = "drop"
   ) %>%
-  collect() # Pull only the summarized macro matrix into local R memory
+  collect() # Pull only the final summarized macro matrix into local R memory
 
-# 3. Print the verified portfolio metadata layout
+# 3. Print the verified portfolio metadata layout for executive review
 knitr::kable(portfolio_summary, caption = "Fintech Executive Summary: Capital Exposure by Tranche")
-
-# Safely decouple the server connection
-dbDisconnect(con)
-
-### 🔍 Advanced Portfolio Subqueries & CTE Filters
-
-The execution block below utilizes `dbplyr` lazy-evaluation syntax to build a multi-layered Common Table Expression (CTE) directly inside the database engine, isolating high-income subprime borrowers:
-  
-  ```{r advanced-cte-filter}
-# Re-open the database connection pipe
-con <- dbConnect(
-  RPostgres::Postgres(),
-  dbname = "credit_risk_db", host = "localhost", port = 5432,
-  user = "postgres", password = "secure_password"
-)
-
-# 1. Establish virtual pointers
-applicants_tbl <- tbl(con, "applicants")
-
-# 2. Calculate the baseline average income scalar via lazy evaluation
-global_avg_income <- applicants_tbl %>%
-  summarise(avg_inc = mean(monthly_income, na.rm = TRUE)) %>%
-  pull(avg_inc)
-
-# 3. Construct the advanced conditional filtering pipeline
-high_income_subprime <- applicants_tbl %>%
-  mutate(
-    risk_tranche = if_else(credit_score_fico >= 700, "PRIME", "SUBPRIME")
-  ) %>%
-  filter(monthly_income > global_avg_income & risk_tranche == "SUBPRIME") %>%
-  select(applicant_id, legal_name, monthly_income, credit_score_fico, risk_tranche) %>%
-  collect()
-
-# 4. Print the verified exceptions table layout for the risk committee
-knitr::kable(high_income_subprime, caption = "Portfolio Risk Anomalies: High-Income Subprime Exceptions")
-
-# Safely close the network connection link
-dbDisconnect(con)
-## 8. Database Architecture Abstraction via Views
-
-To simplify access for downstream Business Intelligence tools and quantitative models, we encapsulate our relational schema layers inside a permanent database View object. This abstract layer exposes unified metrics while masking underlying multi-table join geometries:
-  
-  ```{r database-view-provision}
-# Re-open the database connection pipe
-con <- dbConnect(
-  RPostgres::Postgres(),
-  dbname = "credit_risk_db", host = "localhost", port = 5432,
-  user = "postgres", password = "secure_password"
-)
-
-# 1. Execute the DDL script to create the View object inside the Postgres engine
-dbExecute(con, "
-  CREATE OR REPLACE VIEW v_portfolio_risk_summary AS
-  SELECT 
-      a.applicant_id, a.legal_name, a.email, a.monthly_income, a.credit_score_fico,
-      CASE WHEN a.credit_score_fico >= 700 THEN 'PRIME' ELSE 'SUBPRIME' END AS risk_tranche,
-      l.loan_id, l.loan_amount, l.monthly_installment, l.loan_status
-  FROM applicants a
-  INNER JOIN loans l ON a.applicant_id = l.applicant_id;
-")
-
-# 2. Query the newly created View as if it were a standard flat table
-risk_view_tbl <- tbl(con, "v_portfolio_risk_summary")
-
-# 3. Pull a quick verification sample into local memory for audit review
-view_sample <- risk_view_tbl %>% 
-  filter(risk_tranche == "SUBPRIME") %>% 
-  head(10) %>% 
-  collect()
-
-# 4. Print the final verified abstraction summary
-knitr::kable(view_sample, caption = "Database View Verification: 'v_portfolio_risk_summary' Active Nodes")
-
-# Safely close the active network connection link
-dbDisconnect(con)
-
-
-
 ```
-
-------------------------------------------------------------------------
-
-## 7. System Architecture & Project Execution Log
-
-This section serves as a permanent, reproducible engineering log documenting the development lifecycle, technical challenges, and infrastructure choices implemented across this project.
-
-### 📅 Log Entry 1: Local Machine Environment Setup (Windows 11)
-
-- **Action:** Initialized Git for Windows 11 to activate the Linux-style **Git Bash** terminal emulator environment.
-- **Configuration Safeguards:**
-  - Configured the default terminal text editor to `Notepad` instead of `Vim` to prevent terminal keyboard lockouts.
-  - Overrode default starting repository branches to explicitly enforce the modern `main` standard.
