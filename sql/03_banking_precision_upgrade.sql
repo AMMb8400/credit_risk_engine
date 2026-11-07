@@ -42,3 +42,26 @@ SELECT loan_id, loan_amount, loan_status FROM loans WHERE loan_id = 1;
 
 -- 4. Formally commit all changes to the physical disk storage nodes
 COMMIT;
+
+-- ==============================================================================
+-- Banking Ledger Automation: Atomic Balance Adjustments via Transactions
+-- Phase 2 Milestone: ACID Compliance Engine
+-- Architect: Alexandre Marcel Mbassi
+-- ==============================================================================
+
+BEGIN;
+
+-- 1. Stream a new chronological repayment record into the append-only ledger
+INSERT INTO loan_payments (payment_id, loan_id, payment_amount, payment_date, is_late_payment)
+VALUES (999, 1, 550.00, CURRENT_DATE, FALSE);
+
+-- 2. Simultaneously update the master contract parameters to reduce liability debt
+UPDATE loans
+SET loan_amount = loan_amount - 550.00
+WHERE loan_id = 1;
+
+-- 3. Verify balance parity within the isolated transaction state memory
+SELECT loan_id, loan_amount, loan_status FROM loans WHERE loan_id = 1;
+
+-- 4. Formally commit all changes to the physical disk storage nodes
+COMMIT;
