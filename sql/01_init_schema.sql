@@ -33,3 +33,16 @@ ALTER TABLE credit_cards
 ALTER TABLE credit_cards
     ADD CONSTRAINT block_active_balance_cancellation 
     CHECK (NOT (card_status = 'CANCELLED' AND current_balance > 0.00));
+
+-- ==============================================================================
+-- Phase 2 Performance Tuning: B-Tree Index Optimization Layer
+-- Architect: Alexandre Marcel Mbassi
+-- ==============================================================================
+
+-- 1. Accelerate relational JOIN linkages across foreign key paths
+CREATE INDEX IF NOT EXISTS idx_loans_applicant_id ON loans(applicant_id);
+CREATE INDEX IF NOT EXISTS idx_payments_loan_id ON loan_payments(loan_id);
+CREATE INDEX IF NOT EXISTS idx_cards_applicant_id ON credit_cards(applicant_id);
+
+-- 2. Optimize risk analytics reporting filters for credit scores
+CREATE INDEX IF NOT EXISTS idx_applicants_fico ON applicants(credit_score_fico);

@@ -1,4 +1,4 @@
----
+﻿---
 title: "Real-Time Credit Risk & Lending Scoring Engine"
 subtitle: "Production Blueprint: 3NF PostgreSQL Architecture & Object-Oriented AI Pipelines"
 author: "Alexandre Marcel Mbassi"
@@ -14,36 +14,28 @@ format:
 
 ## 1. Project Objective & Structural Business Rules
 
-This analytical engine evaluates consumer credit risk tiers by processing raw, unnormalized ingestion streams and structuring them into an optimized, third-normal form (3NF) relational database kernel.
+This analytical engine evaluates consumer credit risk tiers by processing raw, unnormalized ingestion streams and structuring them into an optimized, third-normal form (3NF) relational database kernel. 
 
-The architecture programmatically enforces the following corporate fintech mandates: 1. **Absolute Identity Uniqueness:** Every applicant maps to a singular record bound by unique network keys to completely prevent corporate duplication fraud. 2. **Exact Fixed Precision:** All financial values (balances, loan amounts, installments) are mapped to exact decimal storage scales (`NUMERIC`) to completely block binary floating-point rounding vulnerabilities. 3. **Database-Level Firebreaks:** Operational validation rules are handled directly by the database kernel via hardware-enforced check constraints and atomic transactions.
-
-------------------------------------------------------------------------
+---
 
 ## 2. The Broken Ingestion Layer (0NF Data)
 
-Upstream banking feeds frequently deliver data in flat, corrupted, or packed string formats. Below is the raw ingestion sample displayed in an unclipped, rigid text container to preserve complete structural visibility during the audit phase:
+Upstream banking feeds frequently deliver data in flat, corrupted, or packed string formats. Below is the raw ingestion sample displayed in an unclipped, rigid text container:
 
-``` text
+```text
 ID | Name        | Email          | Monthly_Income | FICO | Loan_Details                                 | Late_Payments_Dates
 ---+-------------+----------------+----------------+------+----------------------------------------------+------------------------
 1  | Alice Smith | alice@bank.com | 6000.00        | 740  | Amt: 20000, Installment: 550, Status: ACTIVE | NULL
 2  | Bob Jones   | bob@risk.io    | 4200.00        | 580  | Amt: 15000, Installment: 410, Status: ACTIVE | 01/15/2026, 03/15/2026
 ```
 
-### Critical Architecture Defects Identified:
-
-- **1NF Violation:** The `Late_Payments_Dates` attribute stores a comma-separated array of values inside a single cell, rendering standard mathematical time-series modeling impossible.
-- **3NF/Functional Dependency Violations:** Loan parameters are trapped inside a single arbitrary text block (`Loan_Details`). If an applicant applies for a secondary credit instrument, their name, email, and income must be duplicated across multiple rows, introducing catastrophic data update anomalies.
-
-------------------------------------------------------------------------
+---
 
 ## 3. Relational 3NF Database Schema Migrations
 
-To resolve these anomalies, the database schema is decoupled into three highly narrow, normalized tables. The following pure PostgreSQL Data Definition Language (DDL) code block initializes the storage structures \[1.4\]:
+The following pure PostgreSQL Data Definition Language (DDL) code block initializes the storage structures:
 
-``` sql
--- Table A: Core Client Demographics
+```sql
 CREATE TABLE IF NOT EXISTS applicants (
     applicant_id INT PRIMARY KEY,
     legal_name VARCHAR(100) NOT NULL,
@@ -53,18 +45,15 @@ CREATE TABLE IF NOT EXISTS applicants (
     CONSTRAINT valid_fico CHECK (credit_score_fico BETWEEN 300 AND 850)
 );
 
--- Table B: Active Lending Contracts (Hardened with Exact Precision)
 CREATE TABLE IF NOT EXISTS loans (
     loan_id INT PRIMARY KEY,
     applicant_id INT REFERENCES applicants(applicant_id) ON DELETE RESTRICT,
     loan_amount NUMERIC(12, 2) NOT NULL,
     monthly_installment NUMERIC(12, 2) NOT NULL,
     loan_status VARCHAR(20) DEFAULT 'ACTIVE',
-    CONSTRAINT positive_loan CHECK (loan_amount > 0),
-    CONSTRAINT enforced_lending_ceiling CHECK (loan_amount <= 500000.00)
+    CONSTRAINT positive_loan CHECK (loan_amount > 0)
 );
 
--- Table C: Append-Only Payment Ledger
 CREATE TABLE IF NOT EXISTS loan_payments (
     payment_id INT PRIMARY KEY,
     loan_id INT REFERENCES loans(loan_id),
@@ -74,11 +63,9 @@ CREATE TABLE IF NOT EXISTS loan_payments (
 );
 ```
 
-------------------------------------------------------------------------
+---
 
 ## 4. Automated Text-Parsing & Ingestion Engine
-
-The executable R block below drives our automated transformation pipeline. It initializes the database connection, maps the 0NF raw layout data into R memory, cleanses the packed string parameters using regular expressions, maps U.S. date formats into native date structures, and streams the clean entries straight to our local PostgreSQL tables \[1.4\].
 
 ```{r pipeline-ingestion, message=FALSE, warning=FALSE}
 library(DBI)
@@ -88,16 +75,14 @@ library(tidyr)
 library(stringr)
 library(lubridate)
 
-set.seed(42) # Lock pseudo-random processing determinism [1.4]
+set.seed(42)
 
-# 1. Open the secure network pipe to local PostgreSQL
 con <- dbConnect(
   RPostgres::Postgres(),
   dbname = "credit_risk_db", host = "localhost", port = 5432,
   user = "postgres", password = "secure_password"
 )
 
-# 2. Stage the unnormalized raw data frame
 sandbox_raw <- data.frame(
   ID = c(1, 2),
   Name = c("Alice Smith", "Bob Jones"),
@@ -112,17 +97,9 @@ sandbox_raw <- data.frame(
   stringsAsFactors = FALSE
 )
 
-# 3. Process and normalize Table A: Applicants
 applicants_clean <- sandbox_raw %>%
-  select(
-    applicant_id = ID, 
-    legal_name = Name, 
-    email = Email, 
-    monthly_income = Monthly_Income, 
-    credit_score_fico = FICO
-  )
+  select(applicant_id = ID, legal_name = Name, email = Email, monthly_income = Monthly_Income, credit_score_fico = FICO)
 
-# 4. Parse string structures and normalize Table B: Loans
 loans_clean <- sandbox_raw %>%
   mutate(
     loan_amount = as.numeric(str_extract(Loan_Details, "(?<=Amt:\\s)\\d+")),
@@ -131,7 +108,6 @@ loans_clean <- sandbox_raw %>%
   ) %>%
   select(loan_id = ID, applicant_id = ID, loan_amount, monthly_installment, loan_status)
 
-# 5. Expand multi-value rows, normalize dates, and clean Table C: Payments
 payments_clean <- sandbox_raw %>%
   filter(!is.na(Late_Payments_Dates)) %>%
   separate_rows(Late_Payments_Dates, sep = ",\\s*") %>%
@@ -141,63 +117,18 @@ payments_clean <- sandbox_raw %>%
     loan_id = ID,
     payment_amount = monthly_installment,
     is_late_payment = TRUE,
-    payment_date = mdy(Late_Payments_Dates) # Resolves U.S. date strings
+    payment_date = mdy(Late_Payments_Dates)
   ) %>%
   select(payment_id, loan_id, payment_amount, payment_date, is_late_payment)
 
-# 6. Append records to physical PostgreSQL storage nodes
 dbWriteTable(con, "applicants", applicants_clean, append = TRUE, row.names = FALSE)
 dbWriteTable(con, "loans", loans_clean, append = TRUE, row.names = FALSE)
 dbWriteTable(con, "loan_payments", payments_clean, append = TRUE, row.names = FALSE)
-
-# 7. Seed sample credit card dataframe entries for 3NF verification
-cards_sample <- data.frame(
-  card_id = 501,
-  applicant_id = 1,
-  credit_limit = 10000.00,
-  current_balance = 1250.50,
-  card_status = "ACTIVE",
-  stringsAsFactors = FALSE
-)
-
-dbWriteTable(con, "credit_cards", cards_sample, append = TRUE, row.names = FALSE)
-### 🛡️ Credit Card Status Constraint Validation
-
-The migration block below alters our live credit card node to enforce strict operational states, ensuring automated pipeline actions cannot soft-delete active lines with unpaid debt liabilities:
-  
-  ```{r card-constraint-hardening}
-# Re-open the secure network pipe to local PostgreSQL
-con <- dbConnect(
-  RPostgres::Postgres(),
-  dbname = "credit_risk_db", host = "localhost", port = 5432,
-  user = "postgres", password = "secure_password"
-)
-
-# Execute the kernel check constraints
-dbExecute(con, "
-  ALTER TABLE credit_cards
-      ADD CONSTRAINT valid_card_status 
-      CHECK (card_status IN ('ACTIVE', 'SUSPENDED', 'CANCELLED'));
-")
-
-dbExecute(con, "
-  ALTER TABLE credit_cards
-      ADD CONSTRAINT block_active_balance_cancellation 
-      CHECK (NOT (card_status = 'CANCELLED' AND current_balance > 0.00));
-")
-
-# # Safely close the active network connection link
-dbDisconnect(con)
-
-
-
 ```
 
-------------------------------------------------------------------------
+---
 
 ## 5. Modern In-Database Machine Learning Pipeline (`mlr3`)
-
-With the data structural transformation layer finalized, we load our clean tabular entries directly out of PostgreSQL and feed them into the object-oriented `mlr3` framework to optimize an automated classification engine \[1.4\].
 
 ```{r mlr3-modeling, message=FALSE, warning=FALSE}
 library(mlr3)
@@ -205,60 +136,35 @@ library(mlr3learners)
 library(mlr3tuning)
 library(paradox)
 
-# 1. Pull the live, clean records directly from the database
 model_data <- tbl(con, "applicants") %>% collect()
+model_data <- model_data %>% mutate(risk_tier = ifelse(credit_score_fico >= 700, "PRIME", "HIGH_RISK"))
 
-# Create a synthetic risk category targets column for cross-validation modeling [1.4]
-model_data <- model_data %>%
-  mutate(risk_tier = ifelse(credit_score_fico >= 700, "PRIME", "HIGH_RISK"))
-
-# 2. Instantiate the core mlr3 task configuration object [1.4]
 task_credit <- as_task_classif(model_data, target = "risk_tier", id = "lending_analytics")
-
-# 3. Initialize an Object-Oriented Learner Engine (Random Forest via ranger) [1.4]
 learner_rf <- lrn("classif.ranger", predict_type = "prob")
+search_space <- ps(mtry = p_int(lower = 1, upper = 3), min.node.size = p_int(lower = 1, upper = 10))
 
-# 4. Map the mathematical hyperparameter optimization search bounds [1.4]
-search_space <- ps(
-  mtry = p_int(lower = 1, upper = 3),
-  min.node.size = p_int(lower = 1, upper = 10)
-)
-
-# 5. Establish Evaluation Strategy (Grid Search + 5-Fold Cross Validation loops) [1.4]
 tuner <- tnr("grid_search", resolution = 5)
-resampling_cv5 <- rsmmp("cv", folds = 5)
+resampling_cv5 = rsmp("cv", folds = 5)
 measure_accuracy <- msr("classif.acc")
 
-# 6. Initialize and run the automated execution tuning controller [1.4]
-instance <- TuningInstanceBatchSingleCrit$new(
-  task = task_credit,
-  learner = learner_rf,
-  resampling = resampling_cv5,
-  measure = measure_accuracy,
-  search_space = search_space,
-  terminator = trm("evals", n_evals = 15)
+instance <- TuningInstanceBatchSingleCrit\$new(
+  task = task_credit, learner = learner_rf, resampling = resampling_cv5,
+  measure = measure_accuracy, search_space = search_space, terminator = trm("evals", n_evals = 15)
 )
-
-tuner$optimize(instance)
+tuner\$optimize(instance)
 ```
 
-------------------------------------------------------------------------
+---
 
 ## 6. Real-Time Relational Analytics & Risk Tranche Aggregations
 
-Below, we execute our relational aggregation logic using `dbplyr` to slice raw entries into distinct, summarized macro risk tranches natively inside the database engine kernel \[1.4\]:
-
 ```{r risk-tranche-aggregations, message=FALSE, warning=FALSE}
-# 1. Access the virtual database pointers
 applicants_tbl <- tbl(con, "applicants")
 loans_tbl <- tbl(con, "loans")
 
-# 2. Build the group aggregation pipeline natively inside the database kernel
 portfolio_summary <- applicants_tbl %>%
   inner_join(loans_tbl, by = "applicant_id") %>%
-  mutate(
-    risk_tranche = if_else(credit_score_fico >= 700, "PRIME (LOW RISK)", "SUBPRIME (HIGH RISK)")
-  ) %>%
+  mutate(risk_tranche = if_else(credit_score_fico >= 700, "PRIME (LOW RISK)", "SUBPRIME (HIGH RISK)")) %>%
   group_by(risk_tranche) %>%
   summarise(
     total_active_loans = n(),
@@ -266,52 +172,89 @@ portfolio_summary <- applicants_tbl %>%
     avg_monthly_installment = mean(monthly_installment, na.rm = TRUE),
     .groups = "drop"
   ) %>%
-  collect() # Pull only the final summarized macro matrix into local R memory
+  collect()
 
-# 3. Print the verified portfolio metadata layout for executive review
 knitr::kable(portfolio_summary, caption = "Fintech Executive Summary: Capital Exposure by Tranche")
 ```
 
+---
+
+## 7. Advanced Portfolio Common Table Expressions (CTEs) & Advanced Filters
+
+```{r advanced-cte-filter, message=FALSE, warning=FALSE}
+global_avg_income <- applicants_tbl %>% summarise(avg_inc = mean(monthly_income, na.rm = TRUE)) %>% pull(avg_inc)
+
+high_income_subprime <- applicants_tbl %>%
+  mutate(risk_tranche = if_else(credit_score_fico >= 700, "PRIME", "SUBPRIME")) %>%
+  filter(monthly_income > global_avg_income & risk_tranche == "SUBPRIME") %>%
+  collect()
+
+knitr::kable(high_income_subprime, caption = "Portfolio Risk Anomalies: High-Income Subprime Exceptions")
+```
+
+---
+
+## 8. Database Architecture Abstraction via Views
+
+```{r database-view-provision, message=FALSE, warning=FALSE}
+dbExecute(con, "
+  CREATE OR REPLACE VIEW v_portfolio_risk_summary AS
+  SELECT a.applicant_id, a.legal_name, a.email, a.monthly_income, a.credit_score_fico,
+         CASE WHEN a.credit_score_fico >= 700 THEN 'PRIME' ELSE 'SUBPRIME' END AS risk_tranche,
+         l.loan_id, l.loan_amount, l.monthly_installment, l.loan_status
+  FROM applicants a
+  INNER JOIN loans l ON a.applicant_id = l.applicant_id;
+")
+
+risk_view_tbl <- tbl(con, "v_portfolio_risk_summary")
+view_sample <- risk_view_tbl %>% filter(risk_tranche == "SUBPRIME") %>% head(10) %>% collect()
+knitr::kable(view_sample, caption = "Database View Verification: Active View Nodes")
+```
+
+---
+
+## 9. Schema Expansion: 3NF Credit Card Integration
+
+```{r credit-card-ingestion, message=FALSE, warning=FALSE}
+cards_sample <- data.frame(
+  card_id = 501, applicant_id = 1, credit_limit = 10000.00, current_balance = 1250.50, card_status = "ACTIVE", stringsAsFactors = FALSE
+)
+dbWriteTable(con, "credit_cards", cards_sample, append = TRUE, row.names = FALSE)
+```
+
+---
+
 ## 10. Relational Transaction Isolation & ACID Compliance
 
-To safeguard dual-entry banking books against partial-execution pipeline crashes, we wrap our payment allocation queries inside an atomic transaction block. The code below simulates an automated ledger balancing loop:
-
-```{r banking-transaction-isolation}
-# Re-open the secure network pipe to local PostgreSQL
-con <- dbConnect(
-  RPostgres::Postgres(),
-  dbname = "credit_risk_db", host = "localhost", port = 5432,
-  user = "postgres", password = "secure_password"
-)
-
-# 1. Execute an explicit atomic transaction container natively inside the database
+```{r banking-transaction-isolation, message=FALSE, warning=FALSE}
 dbWithTransaction(con, {
-  
-  # Stream a new chronological payment record into the append-only ledger
   dbExecute(con, "
     INSERT INTO loan_payments (payment_id, loan_id, payment_amount, payment_date, is_late_payment)
     VALUES (999, 1, 550.00, CURRENT_DATE, FALSE);
   ")
-  
-  # Simultaneously update the master contract parameter to reduce liability debt
   dbExecute(con, "
-    UPDATE loans
-    SET loan_amount = loan_amount - 550.00
-    WHERE loan_id = 1;
+    UPDATE loans SET loan_amount = loan_amount - 550.00 WHERE loan_id = 1;
   ")
-  
 })
 
-# 2. Extract the post-transaction balanced state to verify parity
-ledger_check <- dbGetQuery(con, "
-  SELECT loan_id, loan_amount 
-  FROM loans 
-  WHERE loan_id = 1;
-")
-
-# 3. Print the verified ledger results
+ledger_check <- dbGetQuery(con, "SELECT loan_id, loan_amount FROM loans WHERE loan_id = 1;")
 knitr::kable(ledger_check, caption = "Post-Transaction Ledger Audit: Verified Balance Parity")
+```
 
-# Safely decouple the server connection
+---
+
+## 11. Phase 2 Performance Tuning: Database Index Provisioning
+
+```{r database-index-provisioning, message=FALSE, warning=FALSE}
+dbExecute(con, "CREATE INDEX IF NOT EXISTS idx_loans_applicant_id ON loans(applicant_id);")
+dbExecute(con, "CREATE INDEX IF NOT EXISTS idx_payments_loan_id ON loan_payments(loan_id);")
+dbExecute(con, "CREATE INDEX IF NOT EXISTS idx_cards_applicant_id ON credit_cards(applicant_id);")
+dbExecute(con, "CREATE INDEX IF NOT EXISTS idx_applicants_fico ON applicants(credit_score_fico);")
+
+index_audit <- dbGetQuery(con, "
+  SELECT tablename, indexname, indexdef FROM pg_indexes WHERE schemaname = 'public' AND tablename IN ('applicants', 'loans', 'loan_payments', 'credit_cards');
+")
+knitr::kable(index_audit, caption = "Database Performance Audit: Active B-Tree Index Layers")
+
 dbDisconnect(con)
 ```
