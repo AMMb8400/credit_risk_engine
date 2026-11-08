@@ -161,6 +161,35 @@ cards_sample <- data.frame(
 )
 
 dbWriteTable(con, "credit_cards", cards_sample, append = TRUE, row.names = FALSE)
+### 🛡️ Credit Card Status Constraint Validation
+
+The migration block below alters our live credit card node to enforce strict operational states, ensuring automated pipeline actions cannot soft-delete active lines with unpaid debt liabilities:
+  
+  ```{r card-constraint-hardening}
+# Re-open the secure network pipe to local PostgreSQL
+con <- dbConnect(
+  RPostgres::Postgres(),
+  dbname = "credit_risk_db", host = "localhost", port = 5432,
+  user = "postgres", password = "secure_password"
+)
+
+# Execute the kernel check constraints
+dbExecute(con, "
+  ALTER TABLE credit_cards
+      ADD CONSTRAINT valid_card_status 
+      CHECK (card_status IN ('ACTIVE', 'SUSPENDED', 'CANCELLED'));
+")
+
+dbExecute(con, "
+  ALTER TABLE credit_cards
+      ADD CONSTRAINT block_active_balance_cancellation 
+      CHECK (NOT (card_status = 'CANCELLED' AND current_balance > 0.00));
+")
+
+# # Safely close the active network connection link
+dbDisconnect(con)
+
+
 
 ```
 
