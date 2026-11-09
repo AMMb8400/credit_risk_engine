@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Real-Time Credit Risk & Lending Scoring Engine"
 subtitle: "Production Blueprint: 3NF PostgreSQL Architecture & Object-Oriented AI Pipelines"
 author: "Alexandre Marcel Mbassi"
@@ -14,28 +14,28 @@ format:
 
 ## 1. Project Objective & Structural Business Rules
 
-This analytical engine evaluates consumer credit risk tiers by processing raw, unnormalized ingestion streams and structuring them into an optimized, third-normal form (3NF) relational database kernel. 
+This analytical engine evaluates consumer credit risk tiers by processing raw, unnormalized ingestion streams and structuring them into an optimized, third-normal form (3NF) relational database kernel.
 
----
+------------------------------------------------------------------------
 
 ## 2. The Broken Ingestion Layer (0NF Data)
 
 Upstream banking feeds frequently deliver data in flat, corrupted, or packed string formats. Below is the raw ingestion sample displayed in an unclipped, rigid text container:
 
-```text
+``` text
 ID | Name        | Email          | Monthly_Income | FICO | Loan_Details                                 | Late_Payments_Dates
 ---+-------------+----------------+----------------+------+----------------------------------------------+------------------------
 1  | Alice Smith | alice@bank.com | 6000.00        | 740  | Amt: 20000, Installment: 550, Status: ACTIVE | NULL
 2  | Bob Jones   | bob@risk.io    | 4200.00        | 580  | Amt: 15000, Installment: 410, Status: ACTIVE | 01/15/2026, 03/15/2026
 ```
 
----
+------------------------------------------------------------------------
 
 ## 3. Relational 3NF Database Schema Migrations
 
 The following pure PostgreSQL Data Definition Language (DDL) code block initializes the storage structures:
 
-```sql
+``` sql
 CREATE TABLE IF NOT EXISTS applicants (
     applicant_id INT PRIMARY KEY,
     legal_name VARCHAR(100) NOT NULL,
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS loan_payments (
 );
 ```
 
----
+------------------------------------------------------------------------
 
 ## 4. Automated Text-Parsing & Ingestion Engine
 
@@ -80,7 +80,7 @@ set.seed(42)
 con <- dbConnect(
   RPostgres::Postgres(),
   dbname = "credit_risk_db", host = "localhost", port = 5432,
-  user = "postgres", password = "secure_password"
+  user = "postgres", password = "AlmarmbaSQL"
 )
 
 sandbox_raw <- data.frame(
@@ -126,11 +126,11 @@ dbWriteTable(con, "loans", loans_clean, append = TRUE, row.names = FALSE)
 dbWriteTable(con, "loan_payments", payments_clean, append = TRUE, row.names = FALSE)
 ```
 
----
+------------------------------------------------------------------------
 
 ## 5. Modern In-Database Machine Learning Pipeline (`mlr3`)
 
-```{r mlr3-modeling, message=FALSE, warning=FALSE}
+```{r mlr3-modeling, message=FALSE, warning=FALSE, eval=FALSE}
 library(mlr3)
 library(mlr3learners)
 library(mlr3tuning)
@@ -147,14 +147,14 @@ tuner <- tnr("grid_search", resolution = 5)
 resampling_cv5 = rsmp("cv", folds = 5)
 measure_accuracy <- msr("classif.acc")
 
-instance <- TuningInstanceBatchSingleCrit\$new(
+instance <- TuningInstanceBatchSingleCrit$new(
   task = task_credit, learner = learner_rf, resampling = resampling_cv5,
   measure = measure_accuracy, search_space = search_space, terminator = trm("evals", n_evals = 15)
 )
-tuner\$optimize(instance)
+tuner$optimize(instance)
 ```
 
----
+------------------------------------------------------------------------
 
 ## 6. Real-Time Relational Analytics & Risk Tranche Aggregations
 
@@ -177,7 +177,7 @@ portfolio_summary <- applicants_tbl %>%
 knitr::kable(portfolio_summary, caption = "Fintech Executive Summary: Capital Exposure by Tranche")
 ```
 
----
+------------------------------------------------------------------------
 
 ## 7. Advanced Portfolio Common Table Expressions (CTEs) & Advanced Filters
 
@@ -192,7 +192,7 @@ high_income_subprime <- applicants_tbl %>%
 knitr::kable(high_income_subprime, caption = "Portfolio Risk Anomalies: High-Income Subprime Exceptions")
 ```
 
----
+------------------------------------------------------------------------
 
 ## 8. Database Architecture Abstraction via Views
 
@@ -211,7 +211,7 @@ view_sample <- risk_view_tbl %>% filter(risk_tranche == "SUBPRIME") %>% head(10)
 knitr::kable(view_sample, caption = "Database View Verification: Active View Nodes")
 ```
 
----
+------------------------------------------------------------------------
 
 ## 9. Schema Expansion: 3NF Credit Card Integration
 
@@ -222,7 +222,7 @@ cards_sample <- data.frame(
 dbWriteTable(con, "credit_cards", cards_sample, append = TRUE, row.names = FALSE)
 ```
 
----
+------------------------------------------------------------------------
 
 ## 10. Relational Transaction Isolation & ACID Compliance
 
@@ -241,7 +241,7 @@ ledger_check <- dbGetQuery(con, "SELECT loan_id, loan_amount FROM loans WHERE lo
 knitr::kable(ledger_check, caption = "Post-Transaction Ledger Audit: Verified Balance Parity")
 ```
 
----
+------------------------------------------------------------------------
 
 ## 11. Phase 2 Performance Tuning: Database Index Provisioning
 
