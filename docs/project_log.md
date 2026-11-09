@@ -47,3 +47,8 @@
     *   Verified that the relationship between `applicants` and `loans` explicitly uses a 1-to-Many Crow's Foot connector, anchoring database identity integrity.
     *   Confirmed that the `loan_payments` stream is isolated with a terminal fork to visually validate 1NF conformity against cell data packing anomalies.
     *   Ensured all relational connector endpoints terminate directly on explicit Foreign Key (`FK`) cell rows rather than floating table margins, matching enterprise data governance standards.
+
+## 📅 Step 9: Visual Architecture Diagram Alignment
+*   **Action:** Engineered an architectural Entity-Relationship Diagram (ERD) using Draw.io to mirror 3NF parameters.
+*   **Entities Verified:** `applicants`, `loans`, `loan_payments`, and `credit_cards`.
+*   **Relationship Cardinality:** Applied 1-to-Many Crow's Foot connectors over foreign key paths to visually validate structural identity tracking and prevent cell data packing anomalies.
