@@ -1,6 +1,6 @@
 ﻿\# Real-Time Credit Risk \& Lending Scoring Engine
 
-\### ðŸ¦ A High-Performance Fintech Analytics Pipeline Built with 3NF PostgreSQL, R, and Quarto
+\### A High-Performance Fintech Analytics Pipeline Built with 3NF PostgreSQL, R, and Quarto
 
 
 
@@ -20,7 +20,7 @@ This repository contains an end-to-end, production-ready credit risk scoring sys
 
 
 
-\## ðŸ›ï¸ System Architecture \& Data Flow
+\## System Architecture \& Data Flow
 
 
 
@@ -32,9 +32,9 @@ Traditional financial pipelines fail because they extract multi-gigabyte flat ta
 
 &#x20;  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
 
-&#x20;  â”‚       1. Raw Data Input        â”‚
+&#x20;        1. Raw Data Input        â”‚
 
-&#x20;  â”‚ (U.S. Formatted Lending Files) â”‚
+&#x20;  (U.S. Formatted Lending Files) â”‚
 
 &#x20;  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
@@ -44,21 +44,21 @@ Traditional financial pipelines fail because they extract multi-gigabyte flat ta
 
 &#x20;  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
 
-&#x20;  â”‚  2. Core Postgres DB (3NF)     â”‚  â—„â”€â”€ Enforces ACID Integrity
+&#x20;   2. Core Postgres DB (3NF)      Enforces ACID Integrity
 
-&#x20;  â”‚  (applicants, loans, payments) â”‚      \& Strict Check Constraints
+&#x20;   (applicants, loans, payments)      \& Strict Check Constraints
 
 &#x20;  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
-&#x20;                  â”‚  dbplyr Virtual Link (No Local Memory Waste)
+&#x20;                   dbplyr Virtual Link (No Local Memory Waste)
 
 &#x20;                  â–¼
 
 &#x20;  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
 
-&#x20;  â”‚       3. R Logic Engine        â”‚  â—„â”€â”€ Translates R Into Local SQL;
+&#x20;        3. R Logic Engine         Translates R Into Local SQL;
 
-&#x20;  â”‚   (Quarto Rendered Report)     â”‚      Computes DTI \& Risk Tiers
+&#x20;    (Quarto Rendered Report)          Computes DTI \& Risk Tiers
 
 &#x20;  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
@@ -70,7 +70,7 @@ Traditional financial pipelines fail because they extract multi-gigabyte flat ta
 
 
 
-\## ðŸ› ï¸ The Database Design (3NF Normalization)
+\## The Database Design (3NF Normalization)
 
 
 
@@ -86,7 +86,7 @@ To eliminate data redundancy, prevent update/deletion anomalies, and resolve vis
 
 
 
-\### ðŸ›¡ï¸ Enterprise Safeguards Applied
+\### Enterprise Safeguards Applied
 
 \* \*\*U.S. Date Conformity:\*\* Custom pipelines handle incoming `MM/DD/YYYY` text strings, parsing them directly into queryable PostgreSQL `DATE` types via `lubridate`.
 
@@ -100,7 +100,7 @@ To eliminate data redundancy, prevent update/deletion anomalies, and resolve vis
 
 
 
-\## ðŸš€ How to Run the Pipeline Locally
+\## How to Run the Pipeline Locally
 
 
 
@@ -146,7 +146,7 @@ This will automatically create a highly optimized, single-file interactive \*\*H
 
 
 
-\## ðŸ“ˆ Portfolio Project Impact Metrics
+\## Portfolio Project Impact Metrics
 
 
 
