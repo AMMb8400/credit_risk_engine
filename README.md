@@ -1,6 +1,6 @@
-\# Real-Time Credit Risk \& Lending Scoring Engine
+﻿\# Real-Time Credit Risk \& Lending Scoring Engine
 
-\### 🏦 A High-Performance Fintech Analytics Pipeline Built with 3NF PostgreSQL, R, and Quarto
+\### ðŸ¦ A High-Performance Fintech Analytics Pipeline Built with 3NF PostgreSQL, R, and Quarto
 
 
 
@@ -12,7 +12,7 @@
 
 
 
-This repository contains an end-to-end, production-ready credit risk scoring system built completely inside a reproducible Quarto (.qmd) infrastructure. The engine addresses a common structural problem in financial tech architectures: converting flat-file data data into clean, third-normal form (3NF) structures, and executing intensive analytical models directly inside the database kernel to eliminate server network bottlenecks.
+This repository contains an end-to-end, production-ready credit risk scoring system built completely inside a reproducible Quarto (.qmd) infrastructure. The engine addresses a common structural problem in financial tech architectures: converting flat-file data into clean, third-normal form (3NF) structures, and executing intensive analytical models directly inside the database kernel to eliminate server network bottlenecks.
 
 
 
@@ -20,7 +20,7 @@ This repository contains an end-to-end, production-ready credit risk scoring sys
 
 
 
-\## 🏛️ System Architecture \& Data Flow
+\## ðŸ›ï¸ System Architecture \& Data Flow
 
 
 
@@ -30,37 +30,37 @@ Traditional financial pipelines fail because they extract multi-gigabyte flat ta
 
 ```text
 
-&#x20;  ┌────────────────────────────────┐
+&#x20;  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
 
-&#x20;  │       1. Raw Data Input        │
+&#x20;  â”‚       1. Raw Data Input        â”‚
 
-&#x20;  │ (U.S. Formatted Lending Files) │
+&#x20;  â”‚ (U.S. Formatted Lending Files) â”‚
 
-&#x20;  └───────────────┬────────────────┘
+&#x20;  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
-&#x20;                  │
+&#x20;                  â”‚
 
-&#x20;                  ▼
+&#x20;                  â–¼
 
-&#x20;  ┌────────────────────────────────┐
+&#x20;  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
 
-&#x20;  │  2. Core Postgres DB (3NF)     │  ◄── Enforces ACID Integrity
+&#x20;  â”‚  2. Core Postgres DB (3NF)     â”‚  â—„â”€â”€ Enforces ACID Integrity
 
-&#x20;  │  (applicants, loans, payments) │      \& Strict Check Constraints
+&#x20;  â”‚  (applicants, loans, payments) â”‚      \& Strict Check Constraints
 
-&#x20;  └───────────────┬────────────────┘
+&#x20;  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
-&#x20;                  │  dbplyr Virtual Link (No Local Memory Waste)
+&#x20;                  â”‚  dbplyr Virtual Link (No Local Memory Waste)
 
-&#x20;                  ▼
+&#x20;                  â–¼
 
-&#x20;  ┌────────────────────────────────┐
+&#x20;  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
 
-&#x20;  │       3. R Logic Engine        │  ◄── Translates R Into Local SQL;
+&#x20;  â”‚       3. R Logic Engine        â”‚  â—„â”€â”€ Translates R Into Local SQL;
 
-&#x20;  │   (Quarto Rendered Report)     │      Computes DTI \& Risk Tiers
+&#x20;  â”‚   (Quarto Rendered Report)     â”‚      Computes DTI \& Risk Tiers
 
-&#x20;  └────────────────────────────────┘
+&#x20;  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
 ```
 
@@ -70,7 +70,7 @@ Traditional financial pipelines fail because they extract multi-gigabyte flat ta
 
 
 
-\## 🛠️ The Database Design (3NF Normalization)
+\## ðŸ› ï¸ The Database Design (3NF Normalization)
 
 
 
@@ -86,7 +86,7 @@ To eliminate data redundancy, prevent update/deletion anomalies, and resolve vis
 
 
 
-\### 🛡️ Enterprise Safeguards Applied
+\### ðŸ›¡ï¸ Enterprise Safeguards Applied
 
 \* \*\*U.S. Date Conformity:\*\* Custom pipelines handle incoming `MM/DD/YYYY` text strings, parsing them directly into queryable PostgreSQL `DATE` types via `lubridate`.
 
@@ -100,7 +100,7 @@ To eliminate data redundancy, prevent update/deletion anomalies, and resolve vis
 
 
 
-\## 🚀 How to Run the Pipeline Locally
+\## ðŸš€ How to Run the Pipeline Locally
 
 
 
@@ -146,7 +146,7 @@ This will automatically create a highly optimized, single-file interactive \*\*H
 
 
 
-\## 📈 Portfolio Project Impact Metrics
+\## ðŸ“ˆ Portfolio Project Impact Metrics
 
 
 
@@ -161,5 +161,6 @@ When talking to remote technical interviewers, this setup demonstrates three key
 
 
 
-## ?? 3NF Relational Database Architecture (ERD)
+## 3NF Relational Database Architecture (ERD)
 ![3NF Credit Risk & Lending Relational Architecture](docs/assets/schema_blueprint.drawio.png)
+
