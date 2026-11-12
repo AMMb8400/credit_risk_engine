@@ -160,3 +160,6 @@ When talking to remote technical interviewers, this setup demonstrates three key
 
 
 
+
+## ?? 3NF Relational Database Architecture (ERD)
+![3NF Credit Risk & Lending Relational Architecture](docs/assets/schema_blueprint.drawio.png)
